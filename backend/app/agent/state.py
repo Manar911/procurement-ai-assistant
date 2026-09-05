@@ -1,10 +1,12 @@
 from typing import Any, TypedDict
 
+from app.agent.query_models import MongoQueryPlan
+
 
 class AgentState(TypedDict, total=False):
     question: str
 
-    query_type: str
+    query_plan: MongoQueryPlan
 
     filter_query: dict[str, Any]
 
