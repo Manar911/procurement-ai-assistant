@@ -12,6 +12,8 @@ class AgentState(TypedDict, total=False):
 
     aggregation_pipeline: list[dict[str, Any]]
 
+    validation_errors: list[str]
+
     query_result: Any
 
     final_answer: str
