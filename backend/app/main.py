@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware 
 
 from app.agent.graph import procurement_agent
 from app.database import client, purchase_orders_collection
@@ -9,6 +10,14 @@ app = FastAPI(
     title="Procurement AI Assistant",
     description="AI-powered assistant for querying procurement data.",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
