@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
+from app.agent.graph import procurement_agent
 from app.database import client, purchase_orders_collection
+from app.models.chat import ChatRequest, ChatResponse
 
 
 app = FastAPI(
@@ -41,6 +43,8 @@ def health_check():
             "database": "disconnected",
             "error": str(error)
         }
+
+
 @app.get("/stats")
 def get_stats():
 
@@ -49,15 +53,63 @@ def get_stats():
     )
 
     departments = (
-        purchase_orders_collection.distinct("department_name")
+        purchase_orders_collection.distinct(
+            "department_name"
+        )
     )
 
     suppliers = (
-        purchase_orders_collection.distinct("supplier_name")
+        purchase_orders_collection.distinct(
+            "supplier_name"
+        )
     )
 
     return {
         "total_records": total_records,
         "total_departments": len(departments),
         "total_suppliers": len(suppliers)
-    }    
+    }
+
+
+@app.post(
+    "/chat",
+    response_model=ChatResponse
+)
+def chat(request: ChatRequest):
+
+    try:
+        # Initial state given to the LangGraph agent
+        initial_state = {
+            "question": request.question
+        }
+
+        # Run the complete AI workflow
+        result = procurement_agent.invoke(
+            initial_state
+        )
+
+        final_answer = result.get(
+            "final_answer"
+        )
+
+        if not final_answer:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "The assistant did not produce "
+                    "a final answer."
+                )
+            )
+
+        return ChatResponse(
+            answer=final_answer
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Assistant error: {str(error)}"
+        )
